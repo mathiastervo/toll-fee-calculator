@@ -1,3 +1,4 @@
+// @todo No classes only types?
 
 export class Vehicle {
 }
