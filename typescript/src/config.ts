@@ -1,20 +1,29 @@
+import { Settings } from 'luxon';
+
+Settings.defaultZone = process.env.TZ || 'Europe/Stockholm';
+Settings.defaultLocale = process.env.LOCALE || 'sv-SE';
+
 export const feeConfig: {
-    start: string,
-    end: string,
-    toll: number,
-}[] = [
-    { start: '00:00', end: '05:59', toll: 0 },
-    { start: '06:00', end: '06:29', toll: 9 },
-    { start: '06:30', end: '06:59', toll: 22 },
-    { start: '07:00', end: '07:59', toll: 22 },
-    { start: '08:00', end: '08:29', toll: 16 },
-    { start: '08:30', end: '14:59', toll: 9 },
-    { start: '15:00', end: '15:29', toll: 16 },
-    { start: '15:30', end: '16:59', toll: 22 },
-    { start: '17:00', end: '17:59', toll: 16 },
-    { start: '18:00', end: '18:29', toll: 9 },
-    { start: '18:30', end: '23:59', toll: 0 },
-];
+    current: {
+        start: string,
+        end: string,
+        toll: number,
+    }[],
+} = {
+    current: [
+        { start: '00:00', end: '05:59', toll: 0 },
+        { start: '06:00', end: '06:29', toll: 9 },
+        { start: '06:30', end: '06:59', toll: 22 },
+        { start: '07:00', end: '07:59', toll: 22 },
+        { start: '08:00', end: '08:29', toll: 16 },
+        { start: '08:30', end: '14:59', toll: 9 },
+        { start: '15:00', end: '15:29', toll: 16 },
+        { start: '15:30', end: '16:59', toll: 22 },
+        { start: '17:00', end: '17:59', toll: 16 },
+        { start: '18:00', end: '18:29', toll: 9 },
+        { start: '18:30', end: '23:59', toll: 0 },
+    ]
+};
 
 export const maxDailyFee = 60;
 

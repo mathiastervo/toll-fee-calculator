@@ -35,6 +35,22 @@ const isTollFreeDate = (date: DateTime) => {
 
 const timeToMinutes = (date: DateTime) => date.hour * 60 + date.minute;
 
+const matchFeeFn = (date: DateTime) => (fee) => Interval.fromDateTimes(fee.start, fee.end).contains(date);
+
+const validateDates = (dates: DateTime[]) => {
+    const [first] = dates;
+
+    return dates.map((date) => {
+        if (!date.isValid) {
+            throw Error('Invalid date provided');
+        }
+
+        if (!date.hasSame(first, 'day')) {
+            throw Error('All dates must be the same year and day');
+        }
+    });
+}
+
 /**
  * Calculate the total toll fee for one day.
  * 
@@ -43,10 +59,9 @@ const timeToMinutes = (date: DateTime) => date.hour * 60 + date.minute;
  * @return {number} The total toll fee for that day.
  */
 export const getTollFee = (vehicleType: VehicleType = 'unknown', dates: DateTime[]): number => {
-    // @todo Could possibly have an optional logging param to enable logging but put the responsibility on the consumer.
-    // @todo Observe timezone is not configured yet
+    dates.sort();
 
-    // @todo Filter make sure dates are only from within the active period
+    validateDates(dates);
 
     if (isTollFreeVehicle(vehicleType)) {
         return 0;
@@ -57,28 +72,26 @@ export const getTollFee = (vehicleType: VehicleType = 'unknown', dates: DateTime
         end: DateTime,
         tollFee: number
     }[]>(
-        (collectedFees, date) => {
+        (collectedTollFees, date) => {
             if (isTollFreeDate(date)) {
-                return collectedFees;
+                return collectedTollFees;
             }
 
-            const matchFeeFn = (fee) => Interval.fromDateTimes(fee.start, fee.end).contains(date);
+            const existingTollFee = collectedTollFees.find(matchFeeFn(date));
 
-            const existingFee = collectedFees.find(matchFeeFn);
+            const rest = collectedTollFees.filter((fee) => !matchFeeFn(date)(fee));
 
-            const rest = collectedFees.filter((fee) => !matchFeeFn(fee));
-
-            const tollFee = Math.max((existingFee?.tollFee ?? 0), lookupTollFee(timeToMinutes(date)));
+            const tollFee = Math.max((existingTollFee?.tollFee ?? 0), lookupTollFee(timeToMinutes(date)));
 
             if (!tollFee) {
                 return rest;
             }
 
             // Update existing fee
-            if (existingFee) {
+            if (existingTollFee) {
                 return [
                     {
-                        ...existingFee,
+                        ...existingTollFee,
                         tollFee,
                     },
                     ...rest,
@@ -90,15 +103,15 @@ export const getTollFee = (vehicleType: VehicleType = 'unknown', dates: DateTime
                 ...rest,
                 {
                     start: date,
-                    end: date.plus({ minutes: feeBundlePeriodMinutes } ), // @todo Verify if 59 or 60
+                    end: date.plus({ minutes: feeBundlePeriodMinutes } ),
                     tollFee,
                 },
             ];
         },
         []
-    ).reduce((total, { toll, start }) => {
+    ).reduce((totalTollFee, { tollFee}) => {
         // Here we sum the total toll fee
         // If the sum of all any given days total toll fee should be caped at maxDailyFee value
-        return Math.min(total + toll, maxDailyFee);
+        return Math.min(totalTollFee + tollFee, maxDailyFee);
     }, 0);
 }

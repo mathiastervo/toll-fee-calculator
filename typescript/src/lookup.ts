@@ -3,7 +3,7 @@ import { feeConfig } from './config';
 const parsedConfig: {
     minutes: number,
     toll: number,
-}[] = feeConfig.map(({ start, toll }) => {
+}[] = feeConfig.current.map(({ start, toll }) => {
     const [ hour, minute ] = start.split(':').map(Number);
 
     return {
